@@ -10,6 +10,7 @@ RUN apk update && apk add --no-cache \
     iptables net-tools bind-tools \
     busybox-extras ca-certificates \
     ca-certificates-bundle \
+    xdotool \
   && rm -rf /var/cache/apk/*
 
 RUN set -eux; \

@@ -3,6 +3,8 @@
 set -e
 
 ENABLE_IP_CHECKER="${ENABLE_IP_CHECKER:-false}"
+ENABLE_GUI_CLOSE="${ENABLE_GUI_CLOSE:-false}"
+GUI_WINDOW_NAME="${GUI_WINDOW_NAME:-UrNetwork}"
 API_URL="https://api.github.com/repos/urnetwork/build/releases/latest"
 IP_CHECKER_URL="https://raw.githubusercontent.com/techroy23/IP-Checker/refs/heads/main/app.sh"
 APP_DIR="/app"
@@ -117,6 +119,48 @@ check_ip() {
   fi
 }
 
+# Hàm đóng cửa sổ GUI để giảm CPU usage
+close_gui_window() {
+  local WINDOW_NAME="${1:-$GUI_WINDOW_NAME}"
+  local WAIT_TIME="${2:-10}"
+  
+  if [ "$ENABLE_GUI_CLOSE" != "true" ]; then
+    return 0
+  fi
+  
+  log " >>> An2Kin >>> Closing GUI window: $WINDOW_NAME"
+  
+  # Kiểm tra xem xdotool có sẵn không
+  if ! command -v xdotool >/dev/null 2>&1; then
+    log " >>> An2Kin >>> Warning: xdotool is not installed. Skipping GUI close."
+    return 1
+  fi
+  
+  # Kiểm tra xem DISPLAY có được set không
+  if [ -z "$DISPLAY" ]; then
+    log " >>> An2Kin >>> Warning: DISPLAY environment variable is not set. Skipping GUI close."
+    return 1
+  fi
+  
+  # Đợi một chút để đảm bảo cửa sổ đã mở
+  sleep "$WAIT_TIME"
+  
+  # Tìm và đóng cửa sổ
+  WINDOW_ID=$(xdotool search --name "$WINDOW_NAME" 2>/dev/null | tail -n1)
+  
+  if [ -n "$WINDOW_ID" ]; then
+    log " >>> An2Kin >>> Found window with ID: $WINDOW_ID"
+    xdotool windowfocus "$WINDOW_ID" 2>/dev/null || true
+    sleep 2
+    xdotool windowclose "$WINDOW_ID" 2>/dev/null || true
+    log " >>> An2Kin >>> GUI window '$WINDOW_NAME' closed successfully"
+    return 0
+  else
+    log " >>> An2Kin >>> Warning: No window named '$WINDOW_NAME' found to close"
+    return 1
+  fi
+}
+
 runner() {
     echo ">>> An2Kin >>> Script version: v10.30.2025"
     sh /app/ipinfo.sh
@@ -153,10 +197,22 @@ runner() {
     # Start provider
     login
     
-    # Start provider
+    # Start provider ở background
     ensure_app_dir
     echo ">>> An2Kin >>> Starting provider..."
-    "$APP_DIR/provider" provide
+    "$APP_DIR/provider" provide &
+    PROVIDER_PID=$!
+    
+    # Đợi một chút để provider khởi động và GUI mở (nếu có)
+    sleep 10
+    
+    # Đóng GUI nếu được bật (để giảm CPU usage)
+    if [ "$ENABLE_GUI_CLOSE" = "true" ]; then
+        close_gui_window "$GUI_WINDOW_NAME" 0
+    fi
+    
+    # Chờ provider process (giữ container running)
+    wait $PROVIDER_PID
 }
 
 main() {
