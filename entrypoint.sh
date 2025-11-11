@@ -9,6 +9,7 @@ APP_DIR="/app"
 VERSION_FILE="$APP_DIR/version.txt"
 JWT_FILE="/root/.urnetwork/jwt"
 TMP_DIR="/tmp/urn_update"
+UPDATE_TIME="12:00"
 
 log() {
   echo "$(date '+%Y-%m-%d %H:%M:%S') $*"
@@ -154,10 +155,37 @@ runner() {
     # Start provider
     login
     
-    # Start provider
+    # Start provider ở background
     ensure_app_dir
     echo ">>> An2Kin >>> Starting provider..."
-    "$APP_DIR/provider" provide
+    "$APP_DIR/provider" provide &
+    PROVIDER_PID=$!
+    
+    # Time watcher cho updates
+    (
+      while :; do
+        NOW="$(TZ='Asia/Manila' date +%H:%M)"
+        if [ "$NOW" = "$UPDATE_TIME" ]; then
+            echo ">>> An2Kin >>> watcher: hit $UPDATE_TIME, updating"
+            check_and_update
+            if ! ps aux | grep -q '[p]rovider provide'; then
+                echo ">>> An2Kin >>> provider not running; launching now"
+                login
+                ensure_app_dir
+                "$APP_DIR/provider" provide &
+            else
+                echo ">>> An2Kin >>> provider already running; skipping restart"
+            fi
+            sleep 60
+        fi
+        sleep 30
+      done
+    ) &
+    WATCHER_PID=$!
+    echo ">>> An2Kin >>> Time‐watcher PID is $WATCHER_PID"
+    
+    # Keep container running (wait for time watcher, not provider)
+    wait $WATCHER_PID
 }
 
 main() {
