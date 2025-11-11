@@ -59,6 +59,31 @@ docker run -d --platform linux/amd64 \
   ghcr.io/trungdungalpha/docker-urnetwork:latest
 ```
 
+### From Docker Hub
+```sh
+# Login to Docker Hub (optional, for private images)
+docker login -u kingofmmo
+
+# Pull and run
+docker run -d --platform linux/amd64 \
+  --name="urnetwork" \
+  --restart="always" \
+  --privileged \
+  --log-driver=json-file \
+  --log-opt max-size=5m \
+  --log-opt max-file=3 \
+  -e USER_AUTH="example@gmail.com" \
+  -e PASSWORD="mYv3rYsEcUr3dP@sSw0rD" \
+  -e ENABLE_IP_CHECKER=false \                #optional
+  -e ENABLE_GUI_CLOSE=true \                  #optional: Enable GUI auto-close
+  -e GUI_WINDOW_NAME="UrNetwork" \            #optional: GUI window name
+  -e AUTO_RESTART_INTERVAL=86400 \            #optional: Auto-restart interval (24h)
+  -v /path/to/your/proxy.txt:/app/proxy.txt \ #optional
+  -v vnstat_data:/var/lib/vnstat \            #optional
+  -p 8080:8080 \                              #optional
+  kingofmmo/docker-urnetwork:latest
+```
+
 ### From Docker Hub (Original)
 ```sh
 # Option 1 : amd64 build
@@ -96,9 +121,14 @@ docker run -d --platform linux/arm64 \
   techroy23/docker-urnetwork:latest
 ```
 
+## Docker Desktop
+
+Xem file [DOCKER_DESKTOP.md](DOCKER_DESKTOP.md) để biết cách sử dụng với Docker Desktop GUI.
+
 ## Build and Push
 
-Xem file [BUILD_AND_PUSH.md](BUILD_AND_PUSH.md) để biết cách build và push image lên GitHub Packages.
+- **GitHub Packages**: Xem file [BUILD_AND_PUSH.md](BUILD_AND_PUSH.md)
+- **Docker Hub**: Xem file [DOCKER_HUB_SETUP.md](DOCKER_HUB_SETUP.md)
 
 ## Promo Video
 <div align="center">

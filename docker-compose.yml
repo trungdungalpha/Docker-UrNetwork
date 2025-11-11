@@ -1,24 +1,46 @@
 services:
   urnetwork:
-    image: techroy23/docker-urnetwork:latest
+    # Option 1: Use GitHub Packages (Recommended - with new features)
+    image: ghcr.io/trungdungalpha/docker-urnetwork:latest
+    # Option 2: Use Docker Hub (Your repository)
+    # image: kingofmmo/docker-urnetwork:latest
+    # Option 3: Use Docker Hub (Original)
+    # image: techroy23/docker-urnetwork:latest
+    
     container_name: urnetwork
     platform: linux/amd64                         # linux/arm64
     restart: always
     privileged: true
     pull_policy: always
+    
     environment:
-      USER_AUTH: "example@gmail.com"              # Required
-      PASSWORD: "mYv3rYsEcUr3dP@sSw0rD"           # Required
-    #volumes:
-    #  - /path/to/your/proxy.txt:/app/proxy.txt   # Optional
-    #  - vnstat_data:/var/lib/vnstat              # Optional 
-    #ports:
-    #  - "8080:8080"                              # Optional
+      # Required
+      USER_AUTH: "example@gmail.com"              # Your UrNetwork email
+      PASSWORD: "mYv3rYsEcUr3dP@sSw0rD"           # Your UrNetwork password
+      
+      # Optional - New GUI close features
+      ENABLE_GUI_CLOSE: "false"                   # Set to "true" to enable GUI auto-close (requires xdotool)
+      GUI_WINDOW_NAME: "UrNetwork"                # Name of GUI window to close
+      AUTO_RESTART_INTERVAL: "86400"              # Auto-restart interval in seconds (86400 = 24 hours)
+      
+      # Optional - Other features
+      ENABLE_IP_CHECKER: "false"                  # Enable IP checker
+    
+    # Optional volumes
+    volumes:
+      # - /path/to/your/proxy.txt:/app/proxy.txt   # Proxy configuration file
+      - vnstat_data:/var/lib/vnstat              # vnStat data persistence
+    
+    # Optional ports
+    ports:
+      - "8080:8080"                              # Stats portal: http://localhost:8080/cgi-bin/stats
+    
     logging:
       driver: json-file
       options:
         max-size: "5m"
         max-file: "3"
 
-#volumes:                                         # Optional
-#  vnstat_data:                                   # Optional
+# Optional volumes
+volumes:
+  vnstat_data:                                   # Persistent storage for vnStat data
