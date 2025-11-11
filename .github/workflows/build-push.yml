@@ -56,27 +56,6 @@ jobs:
             echo "username=" >> $GITHUB_OUTPUT
           fi
 
-      - name: Prepare GHCR tags
-        id: ghcr_tags
-        run: |
-          TAGS="ghcr.io/${{ github.repository_owner }}/docker-urnetwork:latest"
-          TAGS="$TAGS"$'\n'"ghcr.io/${{ github.repository_owner }}/docker-urnetwork:${{ steps.sha.outputs.sha }}"
-          TAGS="$TAGS"$'\n'"ghcr.io/${{ github.repository_owner }}/docker-urnetwork:${{ steps.date.outputs.date }}"
-          echo "tags<<EOF" >> $GITHUB_OUTPUT
-          echo "$TAGS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Build and push to GitHub Packages
-        id: build_ghcr
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.ghcr_tags.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
       - name: Log in to Docker Hub
         if: steps.dockerhub.outputs.enabled == 'true'
         uses: docker/login-action@v3
@@ -84,25 +63,29 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Prepare Docker Hub tags
-        if: steps.dockerhub.outputs.enabled == 'true'
-        id: dockerhub_tags
+      - name: Prepare all tags
+        id: all_tags
         run: |
-          TAGS="${{ steps.dockerhub.outputs.username }}/docker-urnetwork:latest"
-          TAGS="$TAGS"$'\n'"${{ steps.dockerhub.outputs.username }}/docker-urnetwork:${{ steps.sha.outputs.sha }}"
-          TAGS="$TAGS"$'\n'"${{ steps.dockerhub.outputs.username }}/docker-urnetwork:${{ steps.date.outputs.date }}"
+          TAGS="ghcr.io/${{ github.repository_owner }}/docker-urnetwork:latest"
+          TAGS="$TAGS"$'\n'"ghcr.io/${{ github.repository_owner }}/docker-urnetwork:${{ steps.sha.outputs.sha }}"
+          TAGS="$TAGS"$'\n'"ghcr.io/${{ github.repository_owner }}/docker-urnetwork:${{ steps.date.outputs.date }}"
+          if [ "${{ steps.dockerhub.outputs.enabled }}" == "true" ]; then
+            TAGS="$TAGS"$'\n'"${{ steps.dockerhub.outputs.username }}/docker-urnetwork:latest"
+            TAGS="$TAGS"$'\n'"${{ steps.dockerhub.outputs.username }}/docker-urnetwork:${{ steps.sha.outputs.sha }}"
+            TAGS="$TAGS"$'\n'"${{ steps.dockerhub.outputs.username }}/docker-urnetwork:${{ steps.date.outputs.date }}"
+          fi
           echo "tags<<EOF" >> $GITHUB_OUTPUT
           echo "$TAGS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Build and push to Docker Hub
-        if: steps.dockerhub.outputs.enabled == 'true'
+      - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.dockerhub_tags.outputs.tags }}
+          tags: ${{ steps.all_tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
