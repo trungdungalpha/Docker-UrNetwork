@@ -257,29 +257,32 @@ runner() {
     echo ">>> An2Kin >>> Script version: v10.30.2025"
     sh /app/ipinfo.sh
     check_ip
-    if [ -f /var/lib/vnstat/vnstat.db ]; then
-        echo ">>> An2Kin >>> vnStat DB already exists (SQLite backend)"
-    elif [ -f /var/lib/vnstat/.config ]; then
-        echo ">>> An2Kin >>> vnStat DB already exists (binary backend)"
-    else
-        echo ">>> An2Kin >>> Initializing vnStat database"
-        vnstatd --initdb
-    fi
-    # Kill existing vnstatd processes to avoid duplicates
-    if pgrep -x vnstatd >/dev/null 2>&1; then
-        echo ">>> An2Kin >>> Killing existing vnstatd processes..."
-        pkill -x vnstatd 2>/dev/null || true
-        sleep 2
-    fi
-    # Start vnstatd daemon if not running
-    if ! pgrep -x vnstatd >/dev/null 2>&1; then
-        vnstatd -d --alwaysadd >/dev/null 2>&1
-        echo ">>> An2Kin >>> vnstatd started"
-    else
-        echo ">>> An2Kin >>> vnstatd already running"
-    fi
-    httpd -f -p 8080 -h /app &
-    echo ">>> An2Kin >>> HTTP server started on container port 8080"
+    # vnstatd disabled to reduce CPU usage
+    # Uncomment below if you need network statistics (stats portal)
+    # if [ -f /var/lib/vnstat/vnstat.db ]; then
+    #     echo ">>> An2Kin >>> vnStat DB already exists (SQLite backend)"
+    # elif [ -f /var/lib/vnstat/.config ]; then
+    #     echo ">>> An2Kin >>> vnStat DB already exists (binary backend)"
+    # else
+    #     echo ">>> An2Kin >>> Initializing vnStat database"
+    #     vnstatd --initdb
+    # fi
+    # # Kill existing vnstatd processes to avoid duplicates
+    # if pgrep -x vnstatd >/dev/null 2>&1; then
+    #     echo ">>> An2Kin >>> Killing existing vnstatd processes..."
+    #     pkill -x vnstatd 2>/dev/null || true
+    #     sleep 2
+    # fi
+    # # Start vnstatd daemon if not running
+    # if ! pgrep -x vnstatd >/dev/null 2>&1; then
+    #     vnstatd -d --alwaysadd >/dev/null 2>&1
+    #     echo ">>> An2Kin >>> vnstatd started"
+    # else
+    #     echo ">>> An2Kin >>> vnstatd already running"
+    # fi
+    # httpd -f -p 8080 -h /app &
+    # echo ">>> An2Kin >>> HTTP server started on container port 8080"
+    echo ">>> An2Kin >>> vnstatd and HTTP stats server disabled (CPU optimization)"
     ensure_app_dir
     check_and_update
     check_proxy

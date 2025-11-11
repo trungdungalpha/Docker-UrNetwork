@@ -58,24 +58,18 @@ docker exec urnetwork pgrep -a vnstatd
 docker stats urnetwork
 ```
 
-## Giải pháp tạm thời: Tắt vnstatd (nếu không cần stats)
+## ✅ Đã tắt vnstatd (CPU optimization)
 
-Nếu bạn không cần stats portal (`http://localhost:8080/cgi-bin/stats`), có thể tắt `vnstatd`:
+**vnstatd đã được tắt hoàn toàn trong entrypoint.sh** để giảm CPU usage. Stats portal (`http://localhost:8080/cgi-bin/stats`) sẽ không hoạt động.
 
-### Cách 1: Comment out trong entrypoint.sh
-```bash
-# Comment out dòng start vnstatd
-# vnstatd -d --alwaysadd >/dev/null 2>&1
-```
+### Nếu muốn bật lại vnstatd:
+1. Uncomment các dòng trong `entrypoint.sh` (dòng 260-284)
+2. Rebuild image và restart container
 
-### Cách 2: Kill process sau khi container start
-```bash
-# Thêm vào docker-compose.yml hoặc docker run command
-docker exec urnetwork pkill -x vnstatd
-```
-
-### Cách 3: Không mount volume vnstat_data
-Nếu không mount volume `vnstat_data`, `vnstatd` sẽ không lưu dữ liệu, nhưng vẫn chạy để collect stats.
+### Lưu ý:
+- Port 8080 không còn cần thiết nếu không dùng stats portal
+- Có thể xóa port mapping `8080:8080` trong docker-compose.yml
+- Volume `vnstat_data` không còn cần thiết
 
 ## Tối ưu hóa vnstatd (giảm CPU usage)
 
