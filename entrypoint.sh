@@ -265,8 +265,19 @@ runner() {
         echo ">>> An2Kin >>> Initializing vnStat database"
         vnstatd --initdb
     fi
-    vnstatd -d --alwaysadd >/dev/null 2>&1
-    echo ">>> An2Kin >>> vnstatd started"
+    # Kill existing vnstatd processes to avoid duplicates
+    if pgrep -x vnstatd >/dev/null 2>&1; then
+        echo ">>> An2Kin >>> Killing existing vnstatd processes..."
+        pkill -x vnstatd 2>/dev/null || true
+        sleep 2
+    fi
+    # Start vnstatd daemon if not running
+    if ! pgrep -x vnstatd >/dev/null 2>&1; then
+        vnstatd -d --alwaysadd >/dev/null 2>&1
+        echo ">>> An2Kin >>> vnstatd started"
+    else
+        echo ">>> An2Kin >>> vnstatd already running"
+    fi
     httpd -f -p 8080 -h /app &
     echo ">>> An2Kin >>> HTTP server started on container port 8080"
     ensure_app_dir
