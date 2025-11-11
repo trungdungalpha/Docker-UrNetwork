@@ -14,19 +14,52 @@ A minimal Docker setup that automatically fetches, updates, and runs the latest 
 - Scheduled update watcher (default at 12:00 Asia/Manila)
 - Resilient provider execution with automatic retries and re-authentication
 - Built-in network diagnostic script (ipinfo.sh)
+- **NEW**: GUI auto-close feature to reduce CPU lag (similar to Wipter)
+- **NEW**: Auto-restart provider every 24h to clear memory
+- **NEW**: Process monitoring with automatic restart on crash
 
 ## Environment variables
 | Variable | Requirement | Description |
 |----------|-------------|-------------|
-| `EMAIL`  | Required    | Your Email. Container exits if not provided. |
+| `USER_AUTH`  | Required    | Your Email. Container exits if not provided. |
 | `PASSWORD`  | Required    | Your Password. Container exits if not provided. |
 | `ENABLE_IP_CHECKER` | Optional | Boolean true/false : Checks and prints your public IPv4 address to stdout visible directly in Docker logs for easy monitoring. |
+| `ENABLE_GUI_CLOSE` | Optional | Boolean true/false : Enable GUI auto-close feature to reduce CPU lag. Requires xdotool and DISPLAY environment. Default: `false` |
+| `GUI_WINDOW_NAME` | Optional | Name of the GUI window to close. Default: `UrNetwork` |
+| `AUTO_RESTART_INTERVAL` | Optional | Auto-restart interval in seconds. Default: `86400` (24 hours). Set to `0` to disable. |
 | `-v /path/to/your/proxy.txt:/app/proxy.txt`  | Optional | Mount a proxy configuration file from host to container.<br>Omit this line entirely if you don't want to use a proxy.<br>The proxy inside the proxy.txt should have this format ip:port:username:password.<br>See the sample below. one proxy per line. |
 | | Optional | `123.456.789.012:55555:myproxyusername:myproxypassword`<br>`234.567.890.123:44444:myproxyusername:myproxypassword`<br>`345.678.901.234:33333:myproxyusername:myproxypassword`<br>`456.789.012.345:22222:myproxyusername:myproxypassword`<br>`567.890.123.456:11111:myproxyusername:myproxypassword` |
 | `-v vnstat_data:/var/lib/vnstat`<br>`-p 8080:8080` | Optional | Stats JSON Portal = `http://localhost:port/cgi-bin/stats` <br>Mounts a docker volume `vnstat_data` to `/var/lib/vnstat`. <br>Mounting it ensures data history persists across restarts or image updates. <br>Each instance needs its own volume and port to avoid overwriting each other’s data.<br>See the sample below. |
 | | Optional | `-v vnstat_data1:/var/lib/vnstat`  # for first container <br>`-p 9001:8080   # Host port 9001`  # for first container <br>`-v vnstat_data2:/var/lib/vnstat`  # for second container <br>`-p 9002:8080   # Host port 9002`  # for second container |
 
 ## Run
+
+### From GitHub Packages (Recommended)
+```sh
+# Login to GitHub Container Registry
+echo $GITHUB_TOKEN | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
+
+# Pull and run
+docker run -d --platform linux/amd64 \
+  --name="urnetwork" \
+  --restart="always" \
+  --privileged \
+  --log-driver=json-file \
+  --log-opt max-size=5m \
+  --log-opt max-file=3 \
+  -e USER_AUTH="example@gmail.com" \
+  -e PASSWORD="mYv3rYsEcUr3dP@sSw0rD" \
+  -e ENABLE_IP_CHECKER=false \                #optional
+  -e ENABLE_GUI_CLOSE=true \                  #optional: Enable GUI auto-close
+  -e GUI_WINDOW_NAME="UrNetwork" \            #optional: GUI window name
+  -e AUTO_RESTART_INTERVAL=86400 \            #optional: Auto-restart interval (24h)
+  -v /path/to/your/proxy.txt:/app/proxy.txt \ #optional
+  -v vnstat_data:/var/lib/vnstat \            #optional
+  -p 8080:8080 \                              #optional
+  ghcr.io/trungdungalpha/docker-urnetwork:latest
+```
+
+### From Docker Hub (Original)
 ```sh
 # Option 1 : amd64 build
 docker run -d --platform linux/amd64 \
@@ -62,6 +95,10 @@ docker run -d --platform linux/arm64 \
   -p 8080:8080 \                              #optional
   techroy23/docker-urnetwork:latest
 ```
+
+## Build and Push
+
+Xem file [BUILD_AND_PUSH.md](BUILD_AND_PUSH.md) để biết cách build và push image lên GitHub Packages.
 
 ## Promo Video
 <div align="center">
