@@ -16,12 +16,25 @@ RUN apk update && apk add --no-cache \
 RUN set -eux; \
     echo "Fetching latest release…"; \
     release_json="$(curl -sL https://api.github.com/repos/urnetwork/build/releases/latest)"; \
+    if [ -z "$release_json" ] || echo "$release_json" | grep -q '"message"'; then \
+        echo "Error: Failed to fetch release info from GitHub API" >&2; \
+        echo "$release_json" >&2; \
+        exit 1; \
+    fi; \
     tar_url="$(echo "$release_json" \
-      | grep '"browser_download_url":' \
-      | grep '.tar.gz"' \
-      | cut -d '"' -f 4)"; \
+      | jq -r '.assets[] | select(.name | endswith(".tar.gz")) | .browser_download_url' \
+      | head -n1)"; \
+    if [ -z "$tar_url" ] || [ "$tar_url" = "null" ]; then \
+        echo "Error: Could not find .tar.gz download URL in release" >&2; \
+        echo "Release JSON:" >&2; \
+        echo "$release_json" | jq . >&2; \
+        exit 1; \
+    fi; \
     echo "Downloading: $tar_url"; \
-    wget -q "$tar_url" -O provider.tar.gz; \
+    wget -q "$tar_url" -O provider.tar.gz || { \
+        echo "Error: Failed to download $tar_url" >&2; \
+        exit 1; \
+    }; \
     if [ "$TARGETARCH" = "amd64" ]; then \
         BIN_TARGET=amd64; \
     elif [ "$TARGETARCH" = "arm64" ]; then \
@@ -29,7 +42,12 @@ RUN set -eux; \
     else \
         echo "Unsupported architecture: $TARGETARCH" && exit 1; \
     fi; \
-    tar -xzf provider.tar.gz --strip-components=2 "linux/$BIN_TARGET/provider"; \
+    tar -xzf provider.tar.gz --strip-components=2 "linux/$BIN_TARGET/provider" || { \
+        echo "Error: Failed to extract provider binary" >&2; \
+        echo "Archive contents:" >&2; \
+        tar -tzf provider.tar.gz | head -20 >&2; \
+        exit 1; \
+    }; \
     chmod +x provider; \
     rm provider.tar.gz
 
