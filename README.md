@@ -1,5 +1,5 @@
 # Docker-UrNetwork Releases v2026.2.20-868307310
-A minimal Docker setup that automatically fetches and runs the latest urNetwork Provider. The container is built on **Alpine Linux**, ensuring a minimal footprint. Includes built-in authentication handling and network diagnostics.
+A minimal Docker setup that automatically fetches and runs the latest urNetwork Provider. The container is built on **Alpine Linux**, ensuring a minimal footprint. Includes built-in authentication handling via **Auth Code** (recommended) or email/password (legacy) and network diagnostics.
 
 ## Links
 | DockerHub | GitHub | Invite |
@@ -18,8 +18,9 @@ A minimal Docker setup that automatically fetches and runs the latest urNetwork 
 ## Environment variables
 | Variable | Requirement | Description |
 |----------|-------------|-------------|
-| `USER_AUTH`  | Required    | Your Email. Container exits if not provided. |
-| `PASSWORD`  | Required    | Your Password. Container exits if not provided. |
+| `AUTH_CODE` | **Required** (recommended) | Your one-time auth code from [app.ur.network](https://app.ur.network/). **Avoids 503 errors.** |
+| `USER_AUTH`  | Legacy fallback | Your Email. Used only if `AUTH_CODE` is not set. May encounter 503 errors. |
+| `PASSWORD`  | Legacy fallback | Your Password. Used only if `AUTH_CODE` is not set. May encounter 503 errors. |
 | `ENABLE_IP_CHECKER` | Optional | Boolean true/false : Checks and prints your public IPv4 address to stdout visible directly in Docker logs for easy monitoring. |
 | `ENABLE_GUI_CLOSE` | Optional | Boolean true/false : Enable GUI auto-close feature to reduce CPU lag. Requires xdotool and DISPLAY environment. Default: `false` |
 | `GUI_WINDOW_NAME` | Optional | Name of the GUI window to close. Default: `UrNetwork` |
@@ -41,8 +42,7 @@ docker run -d --platform linux/amd64 \
   --log-driver=json-file \
   --log-opt max-size=5m \
   --log-opt max-file=3 \
-  -e USER_AUTH="example@gmail.com" \
-  -e PASSWORD="mYv3rYsEcUr3dP@sSw0rD" \
+  -e AUTH_CODE="your_auth_code_here" \
   -e ENABLE_IP_CHECKER=false \                #optional
   -e ENABLE_GUI_CLOSE=true \                  #optional: Enable GUI auto-close
   -e GUI_WINDOW_NAME="UrNetwork" \            #optional: GUI window name
@@ -63,8 +63,7 @@ docker run -d --platform linux/amd64 \
   --log-driver=json-file \
   --log-opt max-size=5m \
   --log-opt max-file=3 \
-  -e USER_AUTH="example@gmail.com" \
-  -e PASSWORD="mYv3rYsEcUr3dP@sSw0rD" \
+  -e AUTH_CODE="your_auth_code_here" \
   -e ENABLE_IP_CHECKER=false \                #optional
   -e ENABLE_GUI_CLOSE=true \                  #optional: Enable GUI auto-close
   -e GUI_WINDOW_NAME="UrNetwork" \            #optional: GUI window name
@@ -83,8 +82,7 @@ docker run -d --platform linux/amd64 \
   --log-driver=json-file \
   --log-opt max-size=5m \
   --log-opt max-file=3 \
-  -e USER_AUTH="example@gmail.com" \
-  -e PASSWORD="mYv3rYsEcUr3dP@sSw0rD" \
+  -e AUTH_CODE="your_auth_code_here" \
   -e ENABLE_IP_CHECKER=false \                #optional
   -v /path/to/your/proxy.txt:/app/proxy.txt \ #optional
   techroy23/docker-urnetwork:latest
@@ -98,8 +96,7 @@ docker run -d --platform linux/arm64 \
   --log-driver=json-file \
   --log-opt max-size=5m \
   --log-opt max-file=3 \
-  -e USER_AUTH="example@gmail.com" \
-  -e PASSWORD="mYv3rYsEcUr3dP@sSw0rD" \
+  -e AUTH_CODE="your_auth_code_here" \
   -e ENABLE_IP_CHECKER=false \                #optional
   -v /path/to/your/proxy.txt:/app/proxy.txt \ #optional
   techroy23/docker-urnetwork:latest
