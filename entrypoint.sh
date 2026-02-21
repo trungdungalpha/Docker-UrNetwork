@@ -89,14 +89,14 @@ login() {
         rm -f ~/.urnetwork/jwt
         echo ">>> An2Kin >>> Removed existing JWT (if any)"
 
-        # Retry loop for auth code
+        # Retry loop for auth code (auth-provide for nightly binary)
         while true; do
-            echo ">>> An2Kin >>> Attempting auth with auth code..."
-            if "$APP_DIR/provider" auth "$AUTH_CODE" -f; then
+            echo ">>> An2Kin >>> Attempting auth-provide with auth code..."
+            if "$APP_DIR/provider" auth-provide "$AUTH_CODE"; then
                 echo ">>> An2Kin >>> Auth code authentication successful"
                 return 0
             else
-                echo ">>> An2Kin >>> auth failed, retrying in 60s..." >&2
+                echo ">>> An2Kin >>> auth-provide failed, retrying in 60s..." >&2
                 sleep 60
             fi
         done
