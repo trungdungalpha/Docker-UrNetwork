@@ -83,15 +83,43 @@ check_and_update() {
 }
 
 login() {
-    rm -f ~/.urnetwork/jwt
-    echo ">>> An2Kin >>> Removed existing JWT (if any)"
+    # Priority 1: AUTH_CODE (auth token) - avoids 503 errors
+    if [ -n "$AUTH_CODE" ]; then
+        echo ">>> An2Kin >>> Using AUTH_CODE for authentication..."
+        rm -f ~/.urnetwork/jwt
+        echo ">>> An2Kin >>> Removed existing JWT (if any)"
 
-    echo ">>> An2Kin >>> Obtaining new JWT…"
-    "$APP_DIR/provider" auth --user_auth="$USER_AUTH" --password="$PASSWORD" -f \
-    || { echo ">>> An2Kin >>> auth failed" >&2; exit 1; }
+        # Retry loop for auth-provide
+        while true; do
+            echo ">>> An2Kin >>> Attempting auth-provide..."
+            if "$APP_DIR/provider" auth-provide "$AUTH_CODE"; then
+                echo ">>> An2Kin >>> Auth code authentication successful"
+                return 0
+            else
+                echo ">>> An2Kin >>> auth-provide failed, retrying in 60s..." >&2
+                sleep 60
+            fi
+        done
 
-    [ -s "$JWT_FILE" ] || { echo ">>> An2Kin >>> no JWT file after auth" >&2; exit 1; }
-    echo ">>> An2Kin >>> obtained JWT"
+    # Priority 2: USER_AUTH/PASSWORD fallback (may get 503 errors)
+    elif [ -n "$USER_AUTH" ] && [ -n "$PASSWORD" ]; then
+        echo ">>> An2Kin >>> WARNING: Using USER_AUTH/PASSWORD login (may get 503 errors)"
+        rm -f ~/.urnetwork/jwt
+        echo ">>> An2Kin >>> Removed existing JWT (if any)"
+
+        echo ">>> An2Kin >>> Obtaining new JWT…"
+        "$APP_DIR/provider" auth --user_auth="$USER_AUTH" --password="$PASSWORD" -f \
+        || { echo ">>> An2Kin >>> auth failed" >&2; exit 1; }
+
+        [ -s "$JWT_FILE" ] || { echo ">>> An2Kin >>> no JWT file after auth" >&2; exit 1; }
+        echo ">>> An2Kin >>> obtained JWT"
+
+    # No credentials provided
+    else
+        echo ">>> An2Kin >>> ERROR: No AUTH_CODE or USER_AUTH/PASSWORD provided" >&2
+        echo ">>> An2Kin >>> Please set -e AUTH_CODE=<your_auth_code> or -e USER_AUTH=<email> -e PASSWORD=<pass>" >&2
+        exit 1
+    fi
 }
 
 check_proxy() {

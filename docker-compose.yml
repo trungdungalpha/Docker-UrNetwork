@@ -14,9 +14,11 @@ services:
     pull_policy: always
     
     environment:
-      # Required
-      USER_AUTH: "example@gmail.com"              # Your UrNetwork email
-      PASSWORD: "mYv3rYsEcUr3dP@sSw0rD"           # Your UrNetwork password
+      # Required - Auth Code (preferred, avoids 503 errors)
+      AUTH_CODE: "your_auth_code_here"              # Get from https://app.ur.network/ → Account Settings
+      # Legacy fallback (may get 503 errors):
+      # USER_AUTH: "example@gmail.com"
+      # PASSWORD: "mYv3rYsEcUr3dP@sSw0rD"
       
       # Optional - GUI close feature (to reduce CPU usage)
       ENABLE_GUI_CLOSE: "true"                    # Set to "true" to enable GUI auto-close (requires xdotool and DISPLAY)
